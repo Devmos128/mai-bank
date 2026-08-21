@@ -6,7 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
     "test": "jest",
     "runner": "ts-node src/runner.ts"
   },
