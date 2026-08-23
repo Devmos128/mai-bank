@@ -11,7 +11,10 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  roots: ['<rootDir>/supplementary'],
+  // Tests live in tests/supplementary/; the helpers and the benchmark they lean
+  // on live in supplementary/. Both are listed so module resolution reaches the
+  // helpers — only tests/supplementary/ actually contains *.test.ts files.
+  roots: ['<rootDir>/tests/supplementary', '<rootDir>/supplementary'],
   testMatch: ['**/*.test.ts'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {

@@ -1,5 +1,5 @@
 /**
- * supplementary/reconciliation.test.ts
+ * tests/supplementary/reconciliation.test.ts
  *
  * NOT part of the graded deliverable. See supplementary/README.md.
  *
@@ -17,8 +17,8 @@
  * graded deliverable.
  */
 
-import { EntryType } from '../src/types';
-import { ACCOUNTS, WINDOW_DAYS, makeLedger, replayRealStream } from './realStream';
+import { EntryType } from '../../src/types';
+import { ACCOUNTS, WINDOW_DAYS, makeLedger, replayRealStream } from '../../supplementary/realStream';
 
 /** Any day past the window: every entry has value_date <= this. */
 const BEYOND_WINDOW = 10_000;

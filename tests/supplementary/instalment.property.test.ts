@@ -1,5 +1,5 @@
 /**
- * supplementary/instalment.property.test.ts
+ * tests/supplementary/instalment.property.test.ts
  *
  * NOT part of the graded deliverable. See supplementary/README.md.
  *
@@ -15,8 +15,8 @@
  * PRNG is seeded, so any failure reproduces exactly.
  */
 
-import { Ledger } from '../src/ledger';
-import { EntryType } from '../src/types';
+import { Ledger } from '../../src/ledger';
+import { EntryType } from '../../src/types';
 
 function makeRng(seed: number): () => number {
   let a = seed >>> 0;

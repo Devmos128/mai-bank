@@ -1,5 +1,5 @@
 /**
- * supplementary/determinism.test.ts
+ * tests/supplementary/determinism.test.ts
  *
  * NOT part of the graded deliverable. See supplementary/README.md.
  *
@@ -11,8 +11,8 @@
  * offers nothing.
  */
 
-import { EntryType } from '../src/types';
-import { ACCOUNTS, WINDOW_DAYS, makeLedger, replayRealStream } from './realStream';
+import { EntryType } from '../../src/types';
+import { ACCOUNTS, WINDOW_DAYS, makeLedger, replayRealStream } from '../../supplementary/realStream';
 
 describe('Replay determinism', () => {
   test('two independent replays produce identical closing balances', () => {

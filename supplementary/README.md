@@ -2,35 +2,60 @@
 
 **Not part of the graded deliverable.**
 
-Everything in this directory is optional and sits outside the required scope.
-It exists to stress-test the design, not to pad the submission. If you are
-assessing the deliverable, `src/` and `tests/` are the whole of it and you can
-stop reading here.
+All of this is optional and sits outside the required scope. It exists to
+stress-test the design, not to pad the submission. If you are assessing the
+deliverable, `src/` and the 38 tests directly under `tests/` are the whole of it
+and you can stop reading here.
+
+## Layout
+
+The work is split across two directories by kind — runnable code and helpers at
+the root, test specs alongside the other tests:
+
+```
+supplementary/
+  README.md                      this file
+  benchmark.ts                   runnable script (npm run benchmark)
+  realStream.ts                  shared E1–E10 replay helper
+
+tests/supplementary/
+  determinism.test.ts
+  instalment.property.test.ts
+  reconciliation.test.ts
+```
 
 ## Isolation
 
-The separation is enforced, not just asserted:
+Because the specs live *inside* `tests/`, separation is enforced by config
+rather than by location:
 
 | | required | supplementary |
 |---|---|---|
 | Run with | `npm test` | `npm run test:supplementary` |
-| Jest config | `jest.config.js` (`roots: tests/`) | `jest.supplementary.config.js` (`roots: supplementary/`) |
+| Jest config | `jest.config.js` | `jest.supplementary.config.js` |
+| Discovery | roots `tests/`, **ignores** `tests/supplementary/` | roots `tests/supplementary/` + `supplementary/` |
 | Tests | 38 | 20 |
-| In the build? | yes (`tsconfig.build.json`) | no — build compiles `src/` only |
+| In the build? | n/a — tests aren't built | no — both dirs excluded |
 
-- `npm test` runs **exactly** the 38 required tests. Its config roots at `tests/`,
-  so nothing here can be picked up by it or inflate its count.
-- Nothing in `src/` or `tests/` imports from this directory. The dependency runs
-  one way only: supplementary reads the public interface of `src/`.
+- `npm test` runs **exactly** the 38 required tests. Since the specs sit under
+  `tests/`, the required config would otherwise sweep them up, so
+  `jest.config.js` carries an explicit
+  `testPathIgnorePatterns: ['<rootDir>/tests/supplementary/']`. That line is what
+  keeps the graded count honest — remove it and `npm test` silently reports 58
+  instead of 38.
+- Nothing in `src/` or the required tests imports from either directory. The
+  dependency runs one way only: supplementary reads the public interface of `src/`.
 - `src/` was not modified to accommodate anything here. Where a test needed a
   method the public interface does not expose, it used the existing equivalent
   rather than adding to core (see `reconciliation.test.ts`).
 - The E1–E10 replay helper is deliberately duplicated in `realStream.ts` rather
-  than imported from `tests/`, so the graded suite stands alone.
+  than imported from the required suite, so the graded tests stand alone.
+- `tsconfig.build.json` excludes both `tests` and `supplementary`, so nothing
+  here reaches `dist/`.
 
 ## Contents
 
-### `benchmark.ts` — replay cost vs. volume
+### `supplementary/benchmark.ts` — replay cost vs. volume
 
 Generates synthetic but valid event streams (CREDIT / DEBIT / AUTHORIZATION /
 SETTLEMENT, random value_dates, bounded backdating) at 1×, 10×, 100× and 1000×
@@ -69,7 +94,7 @@ staying solvent — otherwise the fee cascade never fires and the most expensive
 path goes unmeasured. An earlier draft seeded the account with 50,000,000 fils
 and reported `fees = 0` at every scale, which measured the cheap path only.
 
-### `determinism.test.ts`
+### `tests/supplementary/determinism.test.ts`
 
 Replays the real E1–E10 stream through two fresh `Ledger` instances and asserts
 identical closing balances (per account, per day), fee counts, rejection lists,
@@ -81,7 +106,7 @@ streams could diverge, append-only would buy nothing.
 and is not expected to match across instances. Every field describing the
 economic result is compared.
 
-### `instalment.property.test.ts`
+### `tests/supplementary/instalment.property.test.ts`
 
 Fuzzes the instalment split across thousands of random `(total, count)` pairs.
 The core invariant — parts sum to the total, exactly — holds in every case
@@ -115,7 +140,7 @@ assert the real behaviour, rather than as weakened checks:
    Out of scope for the spec, which only asks for 10000/3, but a real system
    should reject `count > total` at the boundary.
 
-### `reconciliation.test.ts`
+### `tests/supplementary/reconciliation.test.ts`
 
 The double-entry check: for each account, the sum of every booked entry must
 equal the balance the ledger reports — at the end of the window and at every day
