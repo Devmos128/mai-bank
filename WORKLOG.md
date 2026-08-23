@@ -137,33 +137,32 @@ alternative; REJECTED.md carries the step-by-step arithmetic for
 rejecting criteria 2, 6, 7, and 8, and confirms 1, 3, 4, and 5 (with
 the note that 5's premise never triggers).
 
-## 2026-08-21T13:52:10+04:00 — First attempt at a clean build config (false start)
+## 2026-08-21T14:02:06+04:00 — Build config, after two false starts
 
-I pinned the build's TypeScript `types` to `["node"]` to keep the
-shippable config tight. This was a mistake in isolation: it stripped
-the Jest globals that ts-jest inherits, and the test suite stopped
-compiling. Leaving this commit in the history honestly — it's the first
-of two false starts before I got the config right.
+This one took three attempts, and the two dead ends are worth recording
+rather than hiding.
 
-## 2026-08-21T13:59:15+04:00 — Second attempt, and a review catch
+First I pinned the build's TypeScript `types` to `["node"]` to keep the
+shippable config tight. That was wrong in isolation: it stripped the Jest
+globals ts-jest inherits, and the suite stopped compiling. Second, I
+added a dedicated test tsconfig so ts-jest could see the Jest types
+again — that fixed the compile but not the editor, which resolves the
+*root* config and so still flagged `describe` as undefined.
 
-Added a dedicated test tsconfig so ts-jest could see the Jest types
-again. While verifying, I caught something worth recording: an
-out-of-band edit had reverted one domain test to assert that a
-*declined* authorization shows up in the holds map. That contradicts
-the design — declined auths never enter the holds map, they're recorded
-as outcomes — so I restored the correct assertion rather than letting a
-wrong test through. This is exactly the kind of thing the
-review-everything discipline is for.
+What actually works is inverting the two: root `tsconfig.json` is the
+editor/dev config (src and tests, Node + Jest types), and a separate
+`tsconfig.build.json` produces the clean, tests-excluded build. The root
+config is the one an editor's TypeScript server picks up by default,
+which is why the first two attempts kept missing it.
 
-## 2026-08-21T14:02:06+04:00 — Final build config
+One thing worth flagging from the verification pass: an out-of-band edit
+had reverted a domain test to assert that a *declined* authorization
+shows up in the holds map. It doesn't — declined auths never enter that
+map, they're recorded as outcomes — so I restored the correct assertion
+rather than let a wrong test through. Weakening the implementation to
+satisfy a bad test would have been the easy path and the wrong one.
 
-Root `tsconfig.json` is now the editor/dev config (includes src and
-tests, Node + Jest types); a separate `tsconfig.build.json` produces the
-clean, tests-excluded build. This is the layout an editor's TypeScript
-server actually picks up by default, which resolves the earlier
-false starts for good. Verified: build clean, full typecheck clean,
-38/38 tests pass.
+Verified: build clean, full typecheck clean, 38/38 tests pass.
 
 ---
 
@@ -184,7 +183,9 @@ Being honest about what isn't done rather than claiming a clean finish:
   papering over it, in case a reviewer would rather see banker's
   rounding.
 
-- **Repository history is mid-restructure.** I'm in the process of
-  splitting the work into one branch per unit for separate PRs; the
-  main line and the branch layout may not be in their final shape as of
-  this entry.
+- **The build-config work landed as one commit, not three.** The two
+  false starts described above were folded into the final commit rather
+  than kept as separate red-then-green steps. The narrative above is the
+  accurate account of what happened; the commit history is the tidied
+  version of it. Flagging the discrepancy rather than letting the doc
+  imply a granularity the log doesn't have.
