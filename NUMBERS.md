@@ -279,3 +279,39 @@ Per-day breakdown:
 - Day 5: balance 10000 fils → floor(10000 × 4 / 10000) = 4 fils
 - Day 6: balance 10000 fils → floor(10000 × 4 / 10000) = 4 fils
 - Sum: 0 + 0 + 0 + 0 + 4 + 4 = **8 fils**
+
+---
+
+## Supplementary
+
+`supplementary/` holds optional stress-tests that sit **outside** the graded
+deliverable. They are listed here only so the constants below are not mistaken
+for required ones.
+
+| File | What it does |
+|---|---|
+| `benchmark.ts` | Replays synthetic streams at 1×/10×/100×/1000× volume and reports wall-clock cost |
+| `determinism.test.ts` | Two fresh replays of E1–E10 must agree on balances, fees, rejections, outcomes |
+| `instalment.property.test.ts` | Fuzzes the instalment split; asserts parts always sum to the total exactly |
+| `reconciliation.test.ts` | Sum of booked entries must equal the reported balance, per account, per day |
+
+**Why it is kept separate.** `npm test` runs exactly the 38 required tests and
+nothing else — the supplementary suite has its own Jest config rooted at
+`supplementary/` and runs via `npm run test:supplementary` (20 tests). Nothing in
+`src/` or `tests/` imports from it, the production build (`tsconfig.build.json`)
+compiles `src/` only, and no core file was modified to accommodate it. It exists
+to stress-test the design, not to inflate the deliverable.
+
+Constants used only by the benchmark, none of which affect the ledger:
+
+| Constant | Value | Why |
+|---|---|---|
+| Volume multipliers | 1, 10, 100, 1000 | 100× gives the 600-day window the architecture note discusses |
+| Synthetic seed credit | 250,000 fils | Small enough that the balance oscillates around zero so the overdraft cascade actually fires; a large seed leaves the most expensive path unmeasured |
+| Credit range | 100–300,000 fils | Narrower than the debit range, so the balance drifts negative |
+| Debit range | 100–380,000 fils | Wider than credits, to drive the account overdrawn |
+| Backdating window | 0–5 days | Mirrors E7's 3-day backdate; keeps the re-assessment range realistic |
+| PRNG seed | `0x5eed` | Fixed so runs are comparable and any result reproduces |
+
+See `supplementary/README.md` for the measured results and for two findings the
+fuzzing surfaced about the instalment split.
