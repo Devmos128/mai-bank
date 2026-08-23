@@ -15,6 +15,14 @@ Snapshots:   0 total
 Time:        ~6 s
 ```
 
+> **Superseded on 2026-08-23.** The run below was accurate when recorded: the
+> intentional failure was written as `test.failing(...)`, which inverts the
+> result, so Jest counted it as a pass and the suite reported 38/38 green. That
+> masked the very limitation the test exists to surface, and left the
+> assessment's required failing test invisible in the output. It is now a plain
+> `test(...)`. The current run is recorded at the end of this file. This section
+> is left unedited as the record of what was actually observed at the time.
+
 All 38 tests pass. The one `test.failing` ("INTENTIONAL: interest accrual uses floor division") is correctly counted as **passed** by Jest because the failure it describes is expected — the assertion inside asserts 93 fils but the implementation produces 90 fils, which is the documented design trade-off (floor-sum vs. round-half-up).
 
 ---
@@ -149,3 +157,47 @@ All 38 tests pass. The one `test.failing` ("INTENTIONAL: interest accrual uses f
 3. **Over-settlement (AMB-009)** is handled by rejection record, not exception. The hold remains PENDING after a rejected over-settlement attempt.
 4. **Double-settlement** of an already-SETTLED hold is also handled via rejection record (hold status is not PENDING, so it falls into the rejection path).
 5. **Interest capitalization produces 90 fils for ACC-001** (floor-sum of daily accruals). The accrual for Days 4/5/6 involves fractional fils that floor truncates: the design chose floor-sum over round-half-up, as documented in DESIGN.md §5.
+
+---
+
+# Test Run — 2026-08-23 (current)
+
+**Timestamp:** 2026-08-23T11:11:37+04:00
+**Runner:** Jest 29 / ts-jest / Node >= 20
+**Command:** `npm test`
+
+The intentional failure was switched from `test.failing(...)` to a plain
+`test(...)` so it reports as a genuine failure. The suite is unchanged
+otherwise — still 38 tests, still the same assertion.
+
+```
+ PASS  tests/holds.test.ts
+ PASS  tests/domain.test.ts
+ FAIL  tests/adversarial.test.ts
+  ● Adversarial edge cases › INTENTIONAL: interest accrual uses floor division — floor-sum (90) differs from round-half-up total (93)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 93
+    Received: 90
+
+    > 308 |     expect(interestEntry!.amount_fils).toBe(93);
+          |                                        ^
+
+      at Object.<anonymous> (tests/adversarial.test.ts:308:40)
+
+ PASS  tests/instalments.test.ts
+ PASS  tests/fees.test.ts
+ PASS  tests/event-replay.test.ts
+
+Test Suites: 1 failed, 5 passed, 6 total
+Tests:       1 failed, 37 passed, 38 total
+Snapshots:   0 total
+Time:        5.121 s
+```
+
+`npm test` exits non-zero (1) by design. The single failure is the
+assessment's required failing test; any other failure is a real problem.
+
+Supplementary suite, unaffected: `npm run test:supplementary` → 20 passed,
+20 total.

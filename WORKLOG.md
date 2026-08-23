@@ -223,6 +223,36 @@ can end other than a matching settlement, and what I cut and why. The
 append-only section leans on the measured benchmark above rather than on
 estimates.
 
+## 2026-08-23T11:11:37+04:00 — Made the intentional failure actually fail
+
+The assessment asks for "one failing test against your own design". I had
+written it as `test.failing(...)`, which is the idiomatic way to mark a test as
+expected-to-fail — and which inverts the result, so Jest counted it as a **pass**.
+The suite reported `38 passed, 38 total`, with the intentional test showing a
+green tick indistinguishable from every other one.
+
+So the required failing test was invisible in the only output a reviewer is
+likely to look at. The annotation was thorough and the README explained the
+mechanism, but that only helps someone who reads the README before running the
+suite. The requirement is that a test fails; mine didn't.
+
+Switched it to a plain `test(...)`. The body, the assertion, and the arithmetic
+annotation are unchanged — only the declaration. `npm test` now reports
+`1 failed, 37 passed, 38 total` and prints `Expected: 93 / Received: 90`
+against the line that asserts it.
+
+Two consequences worth recording. `npm test` exits non-zero by design now, which
+matters if this ever gets a CI step (there is none today). And README's setup
+section had told the reviewer to expect "38 tests, 38 passed" — that line would
+have contradicted the first thing they saw, so it now states the expected result
+including the deliberate failure.
+
+The earlier "38/38 tests pass" note in the 14:02:06 entry above is left as
+written: it was accurate when recorded. Rewriting it to match today would be
+exactly the backfilling this log opens by disclaiming. `docs/TEST_RUN.md`
+follows the same rule — the old run is marked superseded rather than edited,
+with the current run appended.
+
 ---
 
 ## Still open
