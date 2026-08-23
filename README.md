@@ -115,3 +115,16 @@ additional bookkeeping.
 - **REJECTED.md** — every acceptance criterion that is arithmetically
   wrong, with step-by-step proof and consequence if implemented as
   written (AC2, AC6, AC7, AC8).
+
+## Supplementary material (optional, not part of the graded deliverable)
+
+`supplementary/` holds extra stress-tests I added after the required
+work was done — a scale benchmark, a determinism check, a
+property-based fuzz test on the instalment split, and a reconciliation
+invariant. None of it is required, none of it is imported by `src/`
+or the required tests, and `npm test` never runs it — see
+`supplementary/README.md` for what's there and why, and
+`jest.supplementary.config.js` / `npm run test:supplementary` to run
+it separately. Worth a look if you have time, but `src/` and the 38
+tests under `tests/` are the complete required submission on their
+own.
