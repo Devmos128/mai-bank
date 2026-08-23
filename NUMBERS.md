@@ -279,3 +279,43 @@ Per-day breakdown:
 - Day 5: balance 10000 fils → floor(10000 × 4 / 10000) = 4 fils
 - Day 6: balance 10000 fils → floor(10000 × 4 / 10000) = 4 fils
 - Sum: 0 + 0 + 0 + 0 + 4 + 4 = **8 fils**
+
+---
+
+## Supplementary
+
+Optional stress-tests sit **outside** the graded deliverable, split by kind:
+runnable code and helpers in `supplementary/`, test specs in
+`tests/supplementary/`. They are listed here only so the constants below are not
+mistaken for required ones.
+
+| File | What it does |
+|---|---|
+| `supplementary/benchmark.ts` | Replays synthetic streams at 1×/10×/100×/1000× volume and reports wall-clock cost |
+| `supplementary/realStream.ts` | Shared E1–E10 replay helper (duplicated, not imported from the required suite) |
+| `tests/supplementary/determinism.test.ts` | Two fresh replays of E1–E10 must agree on balances, fees, rejections, outcomes |
+| `tests/supplementary/instalment.property.test.ts` | Fuzzes the instalment split; asserts parts always sum to the total exactly |
+| `tests/supplementary/reconciliation.test.ts` | Sum of booked entries must equal the reported balance, per account, per day |
+
+**Why it is kept separate.** `npm test` runs exactly the 38 required tests and
+nothing else. Because the specs sit under `tests/`, that guarantee is enforced by
+an explicit `testPathIgnorePatterns` entry in `jest.config.js` — the supplementary
+suite has its own config and runs via `npm run test:supplementary` (20 tests).
+Nothing in `src/` or the required tests imports from either directory, the
+production build (`tsconfig.build.json`) excludes both `tests` and
+`supplementary`, and no core file was modified to accommodate it. It exists to
+stress-test the design, not to inflate the deliverable.
+
+Constants used only by the benchmark, none of which affect the ledger:
+
+| Constant | Value | Why |
+|---|---|---|
+| Volume multipliers | 1, 10, 100, 1000 | 100× gives the 600-day window the architecture note discusses |
+| Synthetic seed credit | 250,000 fils | Small enough that the balance oscillates around zero so the overdraft cascade actually fires; a large seed leaves the most expensive path unmeasured |
+| Credit range | 100–300,000 fils | Narrower than the debit range, so the balance drifts negative |
+| Debit range | 100–380,000 fils | Wider than credits, to drive the account overdrawn |
+| Backdating window | 0–5 days | Mirrors E7's 3-day backdate; keeps the re-assessment range realistic |
+| PRNG seed | `0x5eed` | Fixed so runs are comparable and any result reproduces |
+
+See `tests/supplementary/README.md` for the measured results and for two findings the
+fuzzing surfaced about the instalment split.
