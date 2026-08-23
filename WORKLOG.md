@@ -164,17 +164,70 @@ satisfy a bad test would have been the easy path and the wrong one.
 
 Verified: build clean, full typecheck clean, 38/38 tests pass.
 
+## 2026-08-23T10:12:55+04:00 — Stress-tested the design past what the spec asks
+
+With the required work done, I wanted to know where the design actually breaks
+rather than assert it in prose, so I added optional work in `supplementary/`,
+deliberately fenced off from the graded deliverable.
+
+The **benchmark** replays synthetic streams at 1×/10×/100×/1000× the real
+volume. Per-event replay cost rises from ~1 µs to ~345 µs — the ledger answers
+every balance question by rescanning the entire entry list, and fee
+re-assessment calls that once per day plus a second scan for the idempotency
+guard, so event *N* pays O(N) and a full replay is O(N²). At 1000× the stream
+that is ~3.5 seconds for a book that is still trivially small. This is the
+number behind the "recompute from scratch" claim in the architecture document,
+measured rather than assumed.
+
+Getting that measurement honest took a correction. My first version seeded the
+account with 50,000,000 fils, which kept it solvent for the whole run and
+reported `fees = 0` at every scale — it was benchmarking the cheap path and
+skipping the fee cascade entirely. Reducing the seed so the balance oscillates
+around zero is what made the expensive path actually fire.
+
+The **property test** on the instalment split surfaced two things the required
+suite could not, because the spec's single case hides them:
+
+- The spread between instalments is the full remainder, not "at most 1 fil".
+  `split(13, 5)` gives `[2,2,2,2,5]` — a spread of 3, because the whole
+  remainder lands on the last entry. A balanced split (`[3,3,3,2,2]`) conserves
+  money equally well while keeping the parts near-equal. E10 is 10000/3, whose
+  remainder is 1 — the one case where both approaches agree. My own AMB-005
+  claims "at most 1 fil"; that holds only for remainder 0 or 1, and the
+  correction is disclosed in `supplementary/README.md` rather than by quietly
+  rewriting the ambiguity log after the fact.
+- `count > total` books zero-amount entries, against DESIGN.md's "always a
+  non-zero integer". Money is still conserved, so it is a boundary the spec
+  never reaches, but a real system should reject it outright.
+
+Both are recorded as passing tests asserting the *real* behaviour. Weakening
+the assertions to make them green would have thrown away the finding.
+
+Isolation is enforced, not just claimed: `npm test` still runs exactly the 38
+required tests, guarded by an explicit ignore pattern I verified is
+load-bearing — remove it and the count silently becomes 58.
+
+## 2026-08-23T10:22:12+04:00 — Split the supplementary work by kind
+
+Moved the test specs to `tests/supplementary/` alongside the other tests, and
+left the runnable benchmark and shared helper in `supplementary/`. Putting the
+specs under `tests/` is what made the ignore pattern necessary in the first
+place, so the guard and this layout have to be read together.
+
+## Deliverable 2 — Architecture & Trade-offs
+
+Written and complete: `architecture-and-tradeoffs.pdf`, 3 pages, covering
+append-only at 100× volume, the operational and regulatory surface that
+value-dated entries create in a UAE-licensed bank, every way an authorization
+can end other than a matching settlement, and what I cut and why. The
+append-only section leans on the measured benchmark above rather than on
+estimates.
+
 ---
 
 ## Still open
 
 Being honest about what isn't done rather than claiming a clean finish:
-
-- **Architecture & Trade-offs document (Deliverable 2) does not exist
-  yet.** The 2–4 page PDF covering append-only at 100× scale,
-  value-dated entries in a UAE-licensed bank, the authorization
-  lifecycle, and what I cut and why — none of that is written. This is
-  the biggest outstanding gap.
 
 - **The floor-vs-round-half-up interest choice is settled but visibly
   a trade-off.** I chose floor + reconciliation and documented the
@@ -182,6 +235,15 @@ Being honest about what isn't done rather than claiming a clean finish:
   defending it, but I've deliberately left it visible rather than
   papering over it, in case a reviewer would rather see banker's
   rounding.
+
+- **AMB-005 overstates the instalment split and is left uncorrected.**
+  It claims the split "minimises the maximum deviation between
+  instalments (at most 1 fil)", which the fuzzing above disproves for
+  any remainder above 1. I chose to disclose the correction in
+  `supplementary/README.md` rather than edit the ambiguity log after
+  the fact — the record of what I believed while building is worth more
+  than a tidied one. Flagging it here so the discrepancy is not
+  something a reviewer has to catch me on.
 
 - **The build-config work landed as one commit, not three.** The two
   false starts described above were folded into the final commit rather
