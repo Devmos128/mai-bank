@@ -317,5 +317,5 @@ Constants used only by the benchmark, none of which affect the ledger:
 | Backdating window | 0–5 days | Mirrors E7's 3-day backdate; keeps the re-assessment range realistic |
 | PRNG seed | `0x5eed` | Fixed so runs are comparable and any result reproduces |
 
-See `tests/supplementary/README.md` for the measured results and for two findings the
+See `supplementary/README.md` for the measured results and for two findings the
 fuzzing surfaced about the instalment split.
