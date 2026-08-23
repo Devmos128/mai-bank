@@ -236,11 +236,4 @@ Being honest about what isn't done rather than claiming a clean finish:
   papering over it, in case a reviewer would rather see banker's
   rounding.
 
-- **AMB-005 overstates the instalment split and is left uncorrected.**
-  It claims the split "minimises the maximum deviation between
-  instalments (at most 1 fil)", which the fuzzing above disproves for
-  any remainder above 1. I chose to disclose the correction in
-  `supplementary/README.md` rather than edit the ambiguity log after
-  the fact — the record of what I believed while building is worth more
-  than a tidied one. Flagging it here so the discrepancy is not
-  something a reviewer has to catch me on.
+
