@@ -244,10 +244,3 @@ Being honest about what isn't done rather than claiming a clean finish:
   the fact — the record of what I believed while building is worth more
   than a tidied one. Flagging it here so the discrepancy is not
   something a reviewer has to catch me on.
-
-- **The build-config work landed as one commit, not three.** The two
-  false starts described above were folded into the final commit rather
-  than kept as separate red-then-green steps. The narrative above is the
-  accurate account of what happened; the commit history is the tidied
-  version of it. Flagging the discrepancy rather than letting the doc
-  imply a granularity the log doesn't have.
