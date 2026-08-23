@@ -274,19 +274,21 @@ describe('Adversarial edge cases', () => {
   // The design explicitly uses floor division and the reconciliation step sums
   // the floors (DESIGN.md §5). The capitalized total IS 90 fils. The test
   // below asserts 93 fils (round-half-up expectation), which FAILS because the
-  // implementation produces 90 fils. The test.failing annotation documents
-  // that the floor-sum approach undercharges vs. round-half-up, and that
-  // correcting this would require a change to DESIGN.md §5.
+  // implementation produces 90 fils. That failure documents that the floor-sum
+  // approach undercharges vs. round-half-up, and that correcting it would
+  // require a change to DESIGN.md §5.
   //
   // What a proper fix would require: use round-half-up (or banker's rounding)
   // for each daily accrual and reconcile the residual explicitly into the last
   // positive-balance day's accrual to guarantee the exact sum invariant.
   //
-  // NOTE: test.failing means Jest expects this assertion to fail — the test
-  // PASSES in the test suite (as "expected failure"), confirming the floor
-  // limitation is real and reproducible.
+  // NOTE: this is deliberately a plain `test(...)`, so it reports as a genuine
+  // failure in the suite output (37 passed, 1 failed). It was previously
+  // `test.failing(...)`, which inverts the result and made Jest count it as a
+  // PASS — hiding the very limitation it exists to surface, and leaving the
+  // suite showing 38/38 green with no failing test visible anywhere.
   // =========================================================================
-  test.failing('INTENTIONAL: interest accrual uses floor division — floor-sum (90) differs from round-half-up total (93)', () => {
+  test('INTENTIONAL: interest accrual uses floor division — floor-sum (90) differs from round-half-up total (93)', () => {
     const ledger = makeLedger();
     replayAllEvents(ledger);
 

@@ -48,7 +48,11 @@ Pass `--verbose` to see individual test names:
 npm test -- --verbose
 ```
 
-Expected output: **38 tests, 38 passed** across 6 test suites (~6 s).
+Expected output: **38 tests, 37 passed, 1 failed** across 6 test suites
+(~6 s). The single failure is deliberate and is the assessment's
+required failing test — see
+[The one intentionally-failing test](#the-one-intentionally-failing-test)
+below. `npm test` therefore exits non-zero by design.
 
 ## How to read the runner output
 
@@ -78,17 +82,32 @@ For each day it reports:
 
 ## The one intentionally-failing test
 
-In `tests/adversarial.test.ts` there is a test marked `test.failing`
-with the label:
+In `tests/adversarial.test.ts` there is one deliberately failing test,
+labelled:
 
 > INTENTIONAL: interest accrual uses floor division — floor-sum (90)
 > differs from round-half-up total (93)
 
-This test asserts `interestEntry.amount_fils === 93` but the
-implementation produces 90 fils. The inner assertion therefore fails,
-which is exactly what `test.failing` expects — Jest counts the test as
-**passed** overall (a failing inner assertion inside `test.failing` is
-the correct outcome).
+It asserts `interestEntry.amount_fils === 93` while the implementation
+produces 90 fils, so `npm test` reports a genuine failure:
+
+```
+ FAIL  tests/adversarial.test.ts
+  ● Adversarial edge cases › INTENTIONAL: interest accrual uses floor division — floor-sum (90) differs from round-half-up total (93)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 93
+    Received: 90
+
+    > 308 |     expect(interestEntry!.amount_fils).toBe(93);
+
+Test Suites: 1 failed, 5 passed, 6 total
+Tests:       1 failed, 37 passed, 38 total
+```
+
+**This failure is expected and is the only one.** A clean run is 37
+passed, 1 failed, 38 total. Any other failure is a real problem.
 
 What the test reveals: the design chose floor division for daily
 accruals (`accrual = floor(balance × 4 / 10000)`). For ACC-001 after
@@ -98,9 +117,12 @@ to 16, 15, and 15 fils, shedding fractional fils. Under round-half-up
 semantics those three days would yield 17, 16, and 16 fils — a
 difference of 3 fils total, producing 93 instead of 90.
 
-The test is marked `test.failing` (not skipped) because skipping hides
-the limitation. Marking it failing documents the trade-off — floor
-division guarantees the exact-sum invariant via the reconciliation step
+It is a plain `test(...)`, not `test.skip` and not `test.failing`.
+Skipping would hide the limitation; `test.failing` inverts the result so
+Jest counts it as a **pass**, which would leave the suite reporting 38/38
+green with no failing test visible anywhere — the opposite of the point.
+Letting it fail for real is what documents the trade-off: floor division
+guarantees the exact-sum invariant via the reconciliation step
 (DESIGN.md §5), while round-half-up cannot make that guarantee without
 additional bookkeeping.
 
